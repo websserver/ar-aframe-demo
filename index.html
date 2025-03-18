@@ -23,30 +23,16 @@
         font-size: 1.25em;
         color: white;
       }
-
-      #debug {
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        background: rgba(0, 0, 0, 0.8);
-        color: white;
-        padding: 10px;
-        font-family: monospace;
-        font-size: 14px;
-        z-index: 1000;
-      }
     </style>
   </head>
   <body style="margin: 0px; overflow: hidden;">
-    <div id="debug">Estado: Aguardando marcador...</div>
-    
     <div class="arjs-loader">
-      <div>A carregar a experiência de RA... Por favor, aponte para o marcador Hiro.</div>
+      <div>A carregar...</div>
     </div>
 
     <a-scene
       embedded
-      arjs='sourceType: webcam; debugUIEnabled: true; detectionMode: mono; maxDetectionRate: 30; canvasWidth: 640; canvasHeight: 480;'
+      arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono; maxDetectionRate: 30; canvasWidth: 640; canvasHeight: 480;'
       renderer="logarithmicDepthBuffer: true;">
 
       <a-assets>
@@ -62,54 +48,28 @@
         <a-entity
           gltf-model="#modelo"
           position="0 0 0"
-          scale="5 5 5"
+          scale="10 10 10"
           class="clickable"
           animation="property: rotation; to: 0 360 0; dur: 2000; loop: true; enabled: false">
         </a-entity>
-
-        <a-text
-          value="Toque para animar"
-          position="0 1.5 0"
-          align="center"
-          rotation="-90 0 0"
-          color="#000000"
-          scale="1 1 1">
-        </a-text>
       </a-marker>
 
       <a-entity camera></a-entity>
     </a-scene>
 
     <script>
-      // Debug elements
-      const debugDiv = document.querySelector('#debug');
-      const marker = document.querySelector('a-marker');
-      const modelo = document.querySelector('[gltf-model]');
-
-      // Marker events
-      marker.addEventListener('markerFound', function() {
-        debugDiv.textContent = 'Estado: Marcador encontrado!';
+      // Remove loader when model is ready
+      document.querySelector('[gltf-model]').addEventListener('model-loaded', function() {
+        document.querySelector('.arjs-loader').style.display = 'none';
       });
 
-      marker.addEventListener('markerLost', function() {
-        debugDiv.textContent = 'Estado: Marcador perdido. Procurando...';
-      });
-
-      // Model loaded event
-      modelo.addEventListener('model-loaded', function() {
-        debugDiv.textContent = 'Estado: Modelo carregado com sucesso!';
-      });
-
-      // Click event
+      // Click event for animation
       document.querySelector('.clickable').addEventListener('click', function() {
-        debugDiv.textContent = 'Estado: Clique detectado!';
         const animationEl = this.getAttribute('animation');
         if (!animationEl.enabled) {
           this.setAttribute('animation', 'enabled', true);
-          debugDiv.textContent = 'Estado: Animação iniciada';
         } else {
           this.setAttribute('animation', 'enabled', false);
-          debugDiv.textContent = 'Estado: Animação parada';
         }
       });
     </script>
