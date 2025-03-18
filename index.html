@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
     <style>
       body {
         margin: 0;
@@ -60,7 +59,7 @@
     </div>
     <div id="debug">Estado: Inicializando...</div>
     <div id="controls">
-      🔄 Rodar | 👆 Mover | 🔍 Zoom
+      👆 Arraste para mover o modelo
     </div>
 
     <a-scene
@@ -80,7 +79,7 @@
           position="0 0 0"
           scale="10 10 10"
           class="clickable"
-          gesture-handler="minScale: 0.5; maxScale: 20"
+          drag-rotate-component
           animation="property: rotation; to: 0 360 0; dur: 2000; loop: true; enabled: false">
         </a-entity>
       </a-marker>
@@ -89,75 +88,52 @@
     </a-scene>
 
     <script>
-      AFRAME.registerComponent('gesture-handler', {
-        schema: {
-          enabled: { default: true },
-          rotationFactor: { default: 5 },
-          minScale: { default: 0.3 },
-          maxScale: { default: 8 },
-        },
-
-        init: function() {
-          this.handleScale = this.handleScale.bind(this);
-          this.handleRotation = this.handleRotation.bind(this);
-          this.handleMovement = this.handleMovement.bind(this);
-
+      AFRAME.registerComponent('drag-rotate-component', {
+        init: function () {
           this.isVisible = false;
-          this.initialScale = this.el.object3D.scale.clone();
-          this.scaleFactor = 1;
-
-          this.el.sceneEl.addEventListener('markerFound', (e) => {
+          this.isDragging = false;
+          this.lastX = 0;
+          this.lastY = 0;
+          
+          // Atualiza visibilidade
+          this.el.sceneEl.addEventListener('markerFound', () => {
             this.isVisible = true;
           });
-
-          this.el.sceneEl.addEventListener('markerLost', (e) => {
+          
+          this.el.sceneEl.addEventListener('markerLost', () => {
             this.isVisible = false;
           });
-
-          // Gestos de toque
-          this.hammer = new Hammer(this.el.sceneEl.canvas);
           
-          this.hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
-          this.hammer.get('pinch').set({ enable: true });
-
-          this.hammer.on('pan', this.handleMovement);
-          this.hammer.on('pinch', this.handleScale);
-          this.hammer.on('rotate', this.handleRotation);
+          // Touch events
+          this.el.sceneEl.canvas.addEventListener('touchstart', this.onTouchStart.bind(this));
+          this.el.sceneEl.canvas.addEventListener('touchmove', this.onTouchMove.bind(this));
+          this.el.sceneEl.canvas.addEventListener('touchend', this.onTouchEnd.bind(this));
         },
-
-        handleMovement: function(event) {
+        
+        onTouchStart: function (event) {
           if (!this.isVisible) return;
-
-          const deltaX = event.deltaX / 100;
-          const deltaY = event.deltaY / 100;
-
+          
+          this.isDragging = true;
+          this.lastX = event.touches[0].clientX;
+          this.lastY = event.touches[0].clientY;
+        },
+        
+        onTouchMove: function (event) {
+          if (!this.isVisible || !this.isDragging) return;
+          
+          const deltaX = event.touches[0].clientX - this.lastX;
+          const deltaY = event.touches[0].clientY - this.lastY;
+          
           const position = this.el.object3D.position;
-          position.x += deltaX;
-          position.y -= deltaY;
-        },
-
-        handleRotation: function(event) {
-          if (!this.isVisible) return;
-
-          const rotation = this.el.object3D.rotation;
-          rotation.y += THREE.MathUtils.degToRad(event.rotation * this.data.rotationFactor);
-        },
-
-        handleScale: function(event) {
-          if (!this.isVisible) return;
-
-          this.scaleFactor *= event.scale;
+          position.x += deltaX * 0.01; // Ajuste a sensibilidade aqui
+          position.y -= deltaY * 0.01; // Ajuste a sensibilidade aqui
           
-          const newScale = this.scaleFactor;
-          if (newScale < this.data.minScale || newScale > this.data.maxScale) return;
-
-          this.el.object3D.scale.x = this.initialScale.x * newScale;
-          this.el.object3D.scale.y = this.initialScale.y * newScale;
-          this.el.object3D.scale.z = this.initialScale.z * newScale;
+          this.lastX = event.touches[0].clientX;
+          this.lastY = event.touches[0].clientY;
         },
-
-        remove: function() {
-          this.hammer.destroy();
+        
+        onTouchEnd: function () {
+          this.isDragging = false;
         }
       });
 
@@ -205,6 +181,5 @@
         modelo.setAttribute("visible", false);
       });
     </script>
-    <script src="https://hammerjs.github.io/dist/hammer.min.js"></script>
   </body>
 </html> 
