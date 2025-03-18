@@ -1,73 +1,118 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>MindAR - RA com IQOS</title>
+    <title>AR.js - RA com IQOS</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image.prod.js"></script>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
       body {
         margin: 0;
-      }
-      .example-container {
         overflow: hidden;
-        position: absolute;
-        width: 100%;
+      }
+      .arjs-loader {
         height: 100%;
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .arjs-loader div {
+        text-align: center;
+        font-size: 1.25em;
+        color: white;
+        font-family: Arial, sans-serif;
+      }
+      #debug {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 10px;
+        font-family: monospace;
+        z-index: 1000;
       }
     </style>
   </head>
-  <body>
-    <div class="example-container">
-      <a-scene
-        mindar-image="imageTargetSrc: markers/targets.mind; showStats: false;"
-        color-space="sRGB"
-        renderer="colorManagement: true, physicallyCorrectLights"
-        vr-mode-ui="enabled: false"
-        device-orientation-permission-ui="enabled: false"
-        embedded>
-        
-        <a-assets>
-          <a-asset-item id="modelo" src="modelo3d/modelo.glb"></a-asset-item>
-        </a-assets>
-
-        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-        <a-entity mindar-image-target="targetIndex: 0">
-          <a-entity
-            id="modelo3d"
-            gltf-model="#modelo"
-            position="0 0 0"
-            scale="10 10 10"
-            class="clickable"
-            animation="property: rotation; to: 0 360 0; dur: 2000; loop: true; enabled: false">
-          </a-entity>
-        </a-entity>
-      </a-scene>
+  <body style="margin: 0px; overflow: hidden;">
+    <div class="arjs-loader">
+      <div>A carregar, por favor aguarde...</div>
     </div>
+    <div id="debug">Estado: Inicializando...</div>
+
+    <a-scene
+      vr-mode-ui="enabled: false;"
+      renderer="logarithmicDepthBuffer: true;"
+      embedded
+      arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono; patternRatio: 0.50;">
+
+      <a-assets>
+        <a-asset-item id="modelo" src="modelo3d/modelo.glb"></a-asset-item>
+      </a-assets>
+
+      <a-marker type="pattern" url="markers/imagemicos.patt">
+        <a-entity
+          id="modelo3d"
+          gltf-model="#modelo"
+          position="0 0 0"
+          scale="10 10 10"
+          class="clickable"
+          animation="property: rotation; to: 0 360 0; dur: 2000; loop: true; enabled: false">
+        </a-entity>
+      </a-marker>
+
+      <a-entity camera></a-entity>
+    </a-scene>
 
     <script>
+      const debugDiv = document.getElementById('debug');
       const modelo = document.querySelector("#modelo3d");
+      const scene = document.querySelector('a-scene');
+      const loader = document.querySelector('.arjs-loader');
       
-      // Click event for animation
+      // Eventos de carregamento
+      window.addEventListener('load', function() {
+        debugDiv.textContent = "Estado: Página carregada, aguardando câmara...";
+      });
+
+      scene.addEventListener('loaded', function() {
+        debugDiv.textContent = "Estado: Cena iniciada, procurando marcador...";
+        loader.style.display = 'none';
+      });
+
+      // Eventos do modelo
+      modelo.addEventListener('model-loaded', function() {
+        debugDiv.textContent = "Estado: Modelo 3D carregado!";
+      });
+
       modelo.addEventListener("click", function() {
         const animationEl = this.getAttribute("animation");
         if (!animationEl.enabled) {
           this.setAttribute("animation", "enabled", true);
+          debugDiv.textContent = "Estado: Animação iniciada";
         } else {
           this.setAttribute("animation", "enabled", false);
+          debugDiv.textContent = "Estado: Animação parada";
         }
       });
 
-      // Target found/lost events
-      const sceneEl = document.querySelector('a-scene');
-      sceneEl.addEventListener("targetFound", event => {
-        console.log("Imagem encontrada!");
+      // Eventos de detecção do marcador
+      const marker = document.querySelector('a-marker');
+      
+      marker.addEventListener("markerFound", () => {
+        debugDiv.textContent = "Estado: Marcador encontrado!";
+        modelo.setAttribute("visible", true);
       });
       
-      sceneEl.addEventListener("targetLost", event => {
-        console.log("Imagem perdida!");
+      marker.addEventListener("markerLost", () => {
+        debugDiv.textContent = "Estado: Marcador perdido, continue apontando...";
+        modelo.setAttribute("visible", false);
       });
     </script>
   </body>
