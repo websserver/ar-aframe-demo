@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>A-Frame - RA com Marcador</title>
+    <title>A-Frame - RA com Modelo 3D</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
@@ -49,28 +49,31 @@
       arjs='sourceType: webcam; debugUIEnabled: true; detectionMode: mono; maxDetectionRate: 30; canvasWidth: 640; canvasHeight: 480;'
       renderer="logarithmicDepthBuffer: true;">
 
+      <a-assets>
+        <a-asset-item id="modelo" src="modelo3d/modelo.glb"></a-asset-item>
+      </a-assets>
+
       <a-marker 
         preset="hiro"
         raycaster="objects: .clickable"
         emitevents="true"
         cursor="fuse: false; rayOrigin: mouse;">
         
-        <a-box
-          position="0 1 0"
-          scale="2 2 2"
-          color="#4CC3D9"
-          animation="property: rotation; to: 0 360 0; dur: 2000; loop: true; enabled: false"
+        <a-entity
+          gltf-model="#modelo"
+          position="0 0 0"
+          scale="1 1 1"
           class="clickable"
-          material="opacity: 0.9;">
-        </a-box>
+          animation="property: rotation; to: 0 360 0; dur: 2000; loop: true; enabled: false">
+        </a-entity>
 
         <a-text
           value="Toque para animar"
-          position="0 2.5 0"
+          position="0 1.5 0"
           align="center"
           rotation="-90 0 0"
           color="#000000"
-          scale="2 2 2">
+          scale="1 1 1">
         </a-text>
       </a-marker>
 
@@ -81,17 +84,20 @@
       // Debug elements
       const debugDiv = document.querySelector('#debug');
       const marker = document.querySelector('a-marker');
-      const box = document.querySelector('a-box');
+      const modelo = document.querySelector('[gltf-model]');
 
       // Marker events
       marker.addEventListener('markerFound', function() {
         debugDiv.textContent = 'Estado: Marcador encontrado!';
-        box.setAttribute('material', 'opacity', '1.0');
       });
 
       marker.addEventListener('markerLost', function() {
         debugDiv.textContent = 'Estado: Marcador perdido. Procurando...';
-        box.setAttribute('material', 'opacity', '0.5');
+      });
+
+      // Model loaded event
+      modelo.addEventListener('model-loaded', function() {
+        debugDiv.textContent = 'Estado: Modelo carregado com sucesso!';
       });
 
       // Click event
