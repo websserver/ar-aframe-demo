@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>A-Frame - RA com Sensores</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+      .arjs-loader {
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .arjs-loader div {
+        text-align: center;
+        font-size: 1.25em;
+        color: white;
+      }
+    </style>
+  </head>
+  <body style="margin: 0px; overflow: hidden;">
+    <!-- Loader enquanto a câmara inicializa -->
+    <div class="arjs-loader">
+      <div>A carregar a experiência de RA...</div>
+    </div>
+
+    <a-scene
+      vr-mode-ui="enabled: false"
+      arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'
+      renderer="logarithmicDepthBuffer: true;"
+      embedded>
+
+      <!-- Modelo 3D (usando uma caixa como exemplo) -->
+      <a-box id="modelo3d"
+             position="0 0.5 0"
+             rotation="0 0 0"
+             color="#4CC3D9"
+             scale="0.5 0.5 0.5"
+             animation="property: rotation; to: 0 360 0; dur: 2000; loop: true; enabled: false">
+      </a-box>
+
+      <!-- Texto flutuante -->
+      <a-text value="Clique para animar" 
+              position="0 1.5 0" 
+              color="#000000"
+              align="center"
+              scale="0.5 0.5 0.5">
+      </a-text>
+
+      <!-- Câmera com gestos -->
+      <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+      // Adicionar interatividade
+      document.querySelector('#modelo3d').addEventListener('click', function() {
+        const animationEl = this.getAttribute('animation');
+        if (!animationEl.enabled) {
+          this.setAttribute('animation', 'enabled', true);
+        } else {
+          this.setAttribute('animation', 'enabled', false);
+        }
+      });
+
+      // Verificar se o dispositivo suporta os sensores
+      if (window.DeviceOrientationEvent) {
+        window.addEventListener('deviceorientation', function(event) {
+          const modelo = document.querySelector('#modelo3d');
+          // Aplicar rotação baseada nos sensores
+          modelo.object3D.rotation.x = THREE.MathUtils.degToRad(event.beta);
+          modelo.object3D.rotation.y = THREE.MathUtils.degToRad(event.gamma);
+          modelo.object3D.rotation.z = THREE.MathUtils.degToRad(event.alpha);
+        });
+      } else {
+        console.log('O dispositivo não suporta orientação');
+      }
+
+      // Solicitar permissão para usar os sensores em iOS 13+
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        document.body.addEventListener('click', function() {
+          DeviceOrientationEvent.requestPermission()
+            .then(function(result) {
+              if (result === 'granted') {
+                console.log('Permissão concedida para usar os sensores');
+              }
+            })
+            .catch(console.error);
+        }, { once: true });
+      }
+    </script>
+  </body>
+</html> 
